@@ -136,8 +136,8 @@ func (m *ServiceMonitor) pushDataToClients() {
 			m.sendQueueData(newClient.clientIP)
 
 		// broadcast a new health status message to all clients
-		// deamonFailed == 1 ... deamon failure
-		// deamonFailed == 0 ... deamon ok
+		// newHealthStatus == 1 ... deamon failure
+		// newHealthStatus == 0 ... deamon ok
 		case newHealthStatus := <-m.healthStatusChan:
 			msg := Msg{"Plot", BoolToString(newHealthStatus), time.Now().UnixNano() / int64(time.Millisecond)}
 			m.sendBroadcastMsg(&msg)
