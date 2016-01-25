@@ -7,6 +7,10 @@ https://golang.org/
 ```
 $ export GOPATH="$GOPATH":"$PWD"
 ```
+  3. Get Websockets Lib
+```
+$ go get code.google.com/p/go.net/websocket
+```
 
 ##Build and Run the Monitor App
 ```
