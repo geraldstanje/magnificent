@@ -12,3 +12,8 @@ $ export GOPATH=$GOPATH:`pwd`
 ```
 $ go run monitor.go
 ```
+
+##Open the Monitor App in your Browser
+```
+http://localhost:8080/
+```
