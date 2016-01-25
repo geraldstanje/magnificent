@@ -30,21 +30,21 @@ type Client struct {
 }
 
 type ServiceMonitor struct {
-	errChan            chan error // unbuffered channel
-	errChanWebsock     chan error // unbuffered channel
-	activeClients      map[string]Client
-	deamonHasErrorChan chan bool
-	alertChan          chan string
-	newClientChan      chan Client
-	alertQueue         *queue.Queue
-	healthStatusQueue  *queue.Queue
+	errChan           chan error // unbuffered channel
+	errChanWebsock    chan error // unbuffered channel
+	activeClients     map[string]Client
+	healthStatusChan  chan bool
+	alertChan         chan string
+	newClientChan     chan Client
+	alertQueue        *queue.Queue
+	healthStatusQueue *queue.Queue
 }
 
 func NewServiceMonitor() *ServiceMonitor {
 	m := ServiceMonitor{}
 	m.activeClients = make(map[string]Client)
 	m.errChan = make(chan error)
-	m.deamonHasErrorChan = make(chan bool, 10)
+	m.healthStatusChan = make(chan bool, 10)
 	m.alertChan = make(chan string, 10)
 	m.newClientChan = make(chan Client, 10)
 	m.alertQueue = queue.NewQueue()
@@ -71,7 +71,7 @@ func FloatToString(value float64) string {
 }
 
 func BoolToString(value bool) string {
-	if value == true {
+	if value {
 		return "1"
 	}
 	return "0"
@@ -138,8 +138,8 @@ func (m *ServiceMonitor) pushDataToClients() {
 		// broadcast a new health status message to all clients
 		// deamonFailed == 1 ... deamon failure
 		// deamonFailed == 0 ... deamon ok
-		case deamonFailed := <-m.deamonHasErrorChan:
-			msg := Msg{"Plot", BoolToString(deamonFailed), time.Now().UnixNano() / int64(time.Millisecond)}
+		case newHealthStatus := <-m.healthStatusChan:
+			msg := Msg{"Plot", BoolToString(newHealthStatus), time.Now().UnixNano() / int64(time.Millisecond)}
 			m.sendBroadcastMsg(&msg)
 			// add msg to HealthStatusQueue
 			if m.healthStatusQueue.Len() < maxSizeHealthStatusQueue {
@@ -196,10 +196,10 @@ func HomeHandler(response http.ResponseWriter, request *http.Request) {
 
 func (m *ServiceMonitor) parseResponse(resp string) {
 	if !strings.Contains(resp, "Magnificent!") {
-		m.deamonHasErrorChan <- true
-		m.alertChan <- "Deamon has failed"
+		m.healthStatusChan <- false
 	} else {
-		m.deamonHasErrorChan <- false
+		m.healthStatusChan <- true
+		m.alertChan <- "Deamon has failed"
 	}
 }
 
