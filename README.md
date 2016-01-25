@@ -8,8 +8,7 @@ https://golang.org/
 $ export GOPATH=$GOPATH:`pwd`
 ```
 
-##Build Monitor App
-  * Run the Monitor:
+##Build and Run the Monitor App
 ```
 $ go run monitor.go
 ```
