@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Magnificent Server Health Monitoring</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Verdana, sans-serif;
+            font-size: 8pt;
+            line-height: 12pt;
+            background: #ffffff;
+            color: #555555;
+        }
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+        .line {
+            fill: none;
+            stroke: #f00;
+            stroke-width: 1.5px;
+        }
+        #realtime-graph {
+            width: 75%;
+            margin-top: 40px;
+            display: inline-block;
+            float: left;
+        }
+        #jqxListBox {
+            margin-left: 25px;
+            width: 25%;
+            margin-top: 60px;
+            display: inline-block;
+            float: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div id='realtime-graph'></div>
+    <div id='jqxListBox'></div>
+    </div>
+
+    <script src="http://d3js.org/d3.v3.min.js" type="text/javascript"></script>
+    <script src='http://code.jquery.com/jquery-1.9.1.js' type='text/javascript'></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+    <script src="http://jqwidgets.com/public/jqwidgets/jqxcore.js" type='text/javascript'></script>
+    <script src="http://jqwidgets.com/public/jqwidgets/jqx-all.js" type='text/javascript'></script>
+    <link href="http://jqwidgets.com/public/jqwidgets/styles/jqx.base.css" rel="stylesheet" type="text/css" />
+    <link href="http://jqwidgets.com/public/jqwidgets/styles/jqx.energyblue.css" rel="stylesheet" type="text/css" />
+    <script>
+        var wsURL = "ws://localhost:8080/sock";
+        var n = 60;
+        var nLines = 1;
+        var duration = 10000;
+        var now = new Date(Date.now() - duration);
+        // 1 x nLines array of zeros
+        var count = d3.range(nLines).map(function() {
+            return 0;
+        });
+        // nLines x n array of zeros
+        var data = count.map(function() {
+            return d3.range(n).map(function() {
+                return 0;
+            });
+        });
+        var margin = {
+            top: 20,
+            right: 10,
+            bottom: 45,
+            left: 30
+        };
+        var width = $(window).width() * 0.7; // $(document).width()
+        var height = $(window).height() * 0.8;
+        var x = d3.time.scale()
+            .domain([now - (n - 2) * duration, now - duration])
+            .range([0, width]);
+        var y = d3.scale.linear()
+            .domain([0, 2.0])
+            .range([height, 0]);
+        var line = d3.svg.line()
+            //.interpolate("basis")
+            .x(function(d, i) {
+                return x(now - (n + 1 - i) * duration);
+            })
+            .y(function(d, i) {
+                return y(d);
+            });
+        var color = d3.scale.category10();
+        var svg = d3.select("#realtime-graph").append("svg")
+            .attr("class", "lineChart")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        svg.append("defs").append("clipPath")
+            .attr("id", "clip")
+            .append("rect")
+            .attr("width", width)
+            .attr("height", height);
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .tickSize(width)
+            .orient("right")
+        var gy = svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+        gy.selectAll("text")
+            .attr("text-anchor", "end")
+            .attr("x", 4)
+            .attr("dy", -4)
+        var xAxis = svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(x.axis = d3.svg.axis().scale(x).orient("bottom"));
+        var clipPath = svg.append("g")
+            .attr("clip-path", "url(#clip)");
+        var paths = clipPath.append("g")
+        for (var series in data) {
+            paths.append("path")
+                .attr("class", "line")
+                .data([data[series]])
+                .style("stroke", color(series))
+        }
+        // Add the text label for the x axis
+        svg.append("text")
+            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - 8) + ")")
+            .style("text-anchor", "middle")
+            .text("Time");
+        // Add the text label for the Y axis
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x",0 - (height / 2))
+            .attr("y",0 - margin.left)
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("");
+        // add legend   
+        var colors = [
+          ["Magnificent Server Failure", "#1f77b4"]
+        ];
+        var legend = svg.append("g")
+            .attr("class", "legend")
+            .attr("transform", "translate(-100," + (height + margin.bottom - 15) + ")");
+        var legendRect = legend.selectAll('rect')
+            .data(colors);
+        legendRect.enter()
+            .append("rect")
+            .attr("x", width - margin.left - margin.right - 15)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("y", function (d, i) {
+              return i * 20;
+            })
+            .style("fill", function (d) {
+              return d[1];
+            });
+        var legendText = legend.selectAll('text')
+            .data(colors);
+        legendText.enter()
+            .append("text")
+            .attr("x", width - margin.left - margin.right)
+            .attr("y", function (d, i) {
+              return i * 20 + 9;
+            })
+            .text(function (d) {
+              return d[0];
+            });
+        function plot(timestamp, value) {
+            console.log("value: ", value)
+            // update the domains
+            now = new Date(timestamp);
+            x.domain([now - (n - 2) * duration, now - duration]);
+            // push the new data point at the end
+            for (index = 0; index < nLines; index++) {
+              data[index].push(value);
+            }
+            // slide the x-axis left
+            xAxis.transition()
+                .duration(0)
+                .ease("linear")
+                .call(x.axis);
+            // redraw the line
+            svg.selectAll(".line")
+                .attr("d", line)
+            // slide the line left
+            paths.attr("transform", null)
+                .transition()
+                .duration(duration)
+                .ease("linear")
+                //.attr("transform", "translate(" + x(now - (n - 1) * duration) + ")")
+                //.each("end", tick);
+            // pop the old data point off the front
+            for (index = 0; index < nLines; index++) {
+              data[index].shift();
+            }
+        }
+        // Create a jqxListBox
+        $("#jqxListBox").jqxListBox({
+            theme: 'energyblue',
+            width: $(window).width() * 0.22,
+            height: $(window).height() * 0.8,
+        });
+        function twoDigits(value) {
+            if(value < 10) {
+              return '0' + value;
+            }
+            return value;
+        }
+        function formatTime(timestamp){
+            var a = new Date(timestamp);
+            var hour = a.getHours();
+            var min = a.getMinutes();
+            var sec = a.getSeconds();
+            if (hour >= 12) {
+              hour = hour-12;
+            }
+            var time = twoDigits(hour) + ':' + twoDigits(min) + ':' + twoDigits(sec);
+            return time;
+        }
+        function addAlertMessage(timestamp, msg) {
+            $("#jqxListBox").jqxListBox('addItem', msg + " time=" + formatTime(timestamp) + "\n");
+        }
+        $(document).ready(function() {
+            initialize();
+        });
+        function initialize() {
+            var sock = new ReconnectingWebSocket(wsURL);
+        }
+        // reference: https://github.com/joewalnes/reconnecting-websocket/
+        function ReconnectingWebSocket(url, protocols) {
+            protocols = protocols || [];
+            // These can be altered by calling code.
+            this.debug = false;
+            this.reconnectInterval = 1000;
+            this.timeoutInterval = 2000;
+            var self = this;
+            var ws;
+            var forcedClose = false;
+            var timedOut = false;
+            this.url = url;
+            this.protocols = protocols;
+            this.readyState = WebSocket.CONNECTING;
+            this.URL = url; // Public API
+            this.onopen = function(event) {};
+            this.onclose = function(event) {};
+            this.onconnecting = function(event) {};
+            this.onmessage = function(event) {
+              receiveData(event.data);
+            };
+            this.onerror = function(event) {};
+          function connect(reconnectAttempt) {
+              ws = new WebSocket(url, protocols);
+              self.onconnecting();
+              if (self.debug || ReconnectingWebSocket.debugAll) {
+                  console.debug('ReconnectingWebSocket', 'attempt-connect', url);
+              }
+              var localWs = ws;
+              var timeout = setTimeout(function() {
+                  if (self.debug || ReconnectingWebSocket.debugAll) {
+                    console.debug('ReconnectingWebSocket', 'connection-timeout', url);
+                  }
+                  timedOut = true;
+                  localWs.close();
+                  timedOut = false;
+              }, self.timeoutInterval);
+              ws.onopen = function(event) {
+                  clearTimeout(timeout);
+                  if (self.debug || ReconnectingWebSocket.debugAll) {
+                    console.debug('ReconnectingWebSocket', 'onopen', url);
+                  }
+                  self.readyState = WebSocket.OPEN;
+                  reconnectAttempt = false;
+                  self.onopen(event);
+              };
+              ws.onclose = function(event) {
+                clearTimeout(timeout);
+                ws = null;
+                if (forcedClose) {
+                    self.readyState = WebSocket.CLOSED;
+                    self.onclose(event);
+                } else {
+                    self.readyState = WebSocket.CONNECTING;
+                    self.onconnecting();
+                    if (!reconnectAttempt && !timedOut) {
+                        if (self.debug || ReconnectingWebSocket.debugAll) {
+                            console.debug('ReconnectingWebSocket', 'onclose', url);
+                        }
+                        self.onclose(event);
+                    }
+                    setTimeout(function() {
+                        connect(true);
+                    }, self.reconnectInterval);
+                }
+              };
+              ws.onmessage = function(event) {
+                  if (self.debug || ReconnectingWebSocket.debugAll) {
+                    console.debug('ReconnectingWebSocket', 'onmessage', url, event.data);
+                  }
+                  self.onmessage(event);
+              };
+              ws.onerror = function(event) {
+                  if (self.debug || ReconnectingWebSocket.debugAll) {
+                      console.debug('ReconnectingWebSocket', 'onerror', url, event);
+                  }
+                  self.onerror(event);
+              };
+            }
+            connect(url);
+            this.send = function(data) {
+                if (ws) {
+                  if (self.debug || ReconnectingWebSocket.debugAll) {
+                      console.debug('ReconnectingWebSocket', 'send', url, data);
+                  }
+                  return ws.send(data);
+                } else {
+                    throw 'INVALID_STATE_ERR : Pausing to reconnect websocket';
+                }
+            };
+            this.close = function() {
+                forcedClose = true;
+                if (ws) {
+                    ws.close();
+                }
+            };
+            /**
+              * Additional public API method to refresh the connection if still open (close, re-open).
+              * For example, if the app suspects bad data / missed heart beats, it can try to refresh.
+              */
+            this.refresh = function() {
+                if (ws) {
+                    ws.close();
+                }
+            };
+        }
+        /**
+          * Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
+          */
+        ReconnectingWebSocket.debugAll = false;
+        function receiveData(data) {
+            if (data.length > 0) {
+                try {
+                    var jsonObject = JSON.parse(data);
+                    if (jsonObject.MessageId == "Plot") {
+                        plot(jsonObject.TimeStamp, parseFloat(jsonObject.Content));
+                    } else if (jsonObject.MessageId == "Alert") {
+                        addAlertMessage(jsonObject.TimeStamp, jsonObject.Content);
+                    }
+                  } catch (e) {
+                      console.log(e);
+                  }
+            }
+        }
+    </script>
+</body>
+
+</html>
