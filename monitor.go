@@ -15,7 +15,7 @@ import (
 )
 
 const debug = true
-const maxSizeHealthStatusQueue = 1000 // Magnificent Server Log Store Size, displays the last 1000 seconds in the plot
+const maxSizeHealthStatusQueue = 600 // Magnificent Server Log Store Size, displays the last 600 seconds in the plot
 
 type Msg struct {
 	MessageId string
