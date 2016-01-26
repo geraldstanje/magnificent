@@ -9,7 +9,6 @@ import (
 	"os"
 	"queue"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -50,24 +49,6 @@ func NewServiceMonitor() *ServiceMonitor {
 	m.alertQueue = queue.NewQueue()
 	m.healthStatusQueue = queue.NewQueue()
 	return &m
-}
-
-func IntToString(value int) string {
-	return strconv.FormatInt(int64(value), 10)
-}
-
-func StringToFloat(value string) float64 {
-	result, _ := strconv.ParseFloat(value, 64)
-	return result
-}
-
-func StringToInt(value string) int {
-	result, _ := strconv.ParseInt(value, 10, 64)
-	return int(result)
-}
-
-func FloatToString(value float64) string {
-	return strconv.FormatFloat(value, 'f', -1, 64)
 }
 
 func BoolToString(value bool) string {
