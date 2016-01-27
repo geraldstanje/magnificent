@@ -133,19 +133,19 @@
         // Add the text label for the Y axis
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("x",-60)
-            .attr("y",0 - margin.left)
+            .attr("x", -60)
+            .attr("y", 0 - margin.left)
             .attr("dy", "1em")
             .text("Server Failure");
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("x",-height-30)
-            .attr("y",0 - margin.left)
+            .attr("x", -height - 30)
+            .attr("y", 0 - margin.left)
             .attr("dy", "1em")
             .text("Server Ok");
         // add legend   
         var colors = [
-          ["Server Health Status", "#1f77b4"]
+            ["Server Health Status", "#1f77b4"]
         ];
         var legend = svg.append("g")
             .attr("class", "legend")
@@ -157,194 +157,201 @@
             .attr("x", width - margin.left - margin.right - 15)
             .attr("width", 10)
             .attr("height", 10)
-            .attr("y", function (d, i) {
-              return i * 20;
+            .attr("y", function(d, i) {
+                return i * 20;
             })
-            .style("fill", function (d) {
-              return d[1];
+            .style("fill", function(d) {
+                return d[1];
             });
         var legendText = legend.selectAll('text')
             .data(colors);
         legendText.enter()
             .append("text")
             .attr("x", width - margin.left - margin.right)
-            .attr("y", function (d, i) {
-              return i * 20 + 9;
+            .attr("y", function(d, i) {
+                return i * 20 + 9;
             })
-            .text(function (d) {
-              return d[0];
+            .text(function(d) {
+                return d[0];
             });
+
         function plot(timestamp, value) {
-            console.log("value: ", value)
-            // update the domains
-            now = new Date(timestamp);
-            x.domain([now - (n - 2) * duration, now - duration]);
-            // push the new data point at the end
-            for (index = 0; index < nLines; index++) {
-              data[index].push(value);
+                console.log("value: ", value)
+                    // update the domains
+                now = new Date(timestamp);
+                x.domain([now - (n - 2) * duration, now - duration]);
+                // push the new data point at the end
+                for (index = 0; index < nLines; index++) {
+                    data[index].push(value);
+                }
+                // slide the x-axis left
+                xAxis.transition()
+                    .duration(0)
+                    .ease("linear")
+                    .call(x.axis);
+                // redraw the line
+                svg.selectAll(".line")
+                    .attr("d", line)
+                    // slide the line left
+                paths.attr("transform", null)
+                    .transition()
+                    .duration(duration)
+                    .ease("linear")
+                    //.attr("transform", "translate(" + x(now - (n - 1) * duration) + ")")
+                    //.each("end", tick);
+                    // pop the old data point off the front
+                for (index = 0; index < nLines; index++) {
+                    data[index].shift();
+                }
             }
-            // slide the x-axis left
-            xAxis.transition()
-                .duration(0)
-                .ease("linear")
-                .call(x.axis);
-            // redraw the line
-            svg.selectAll(".line")
-                .attr("d", line)
-            // slide the line left
-            paths.attr("transform", null)
-                .transition()
-                .duration(duration)
-                .ease("linear")
-                //.attr("transform", "translate(" + x(now - (n - 1) * duration) + ")")
-                //.each("end", tick);
-            // pop the old data point off the front
-            for (index = 0; index < nLines; index++) {
-              data[index].shift();
-            }
-        }
-        // Create a jqxListBox
+            // Create a jqxListBox
         $("#jqxListBox").jqxListBox({
             theme: 'energyblue',
             width: $(window).width() * 0.22,
             height: $(window).height() * 0.8,
         });
+
         function twoDigits(value) {
-            if(value < 10) {
-              return '0' + value;
+            if (value < 10) {
+                return '0' + value;
             }
             return value;
         }
-        function formatTime(timestamp){
+
+        function formatTime(timestamp) {
             var a = new Date(timestamp);
             var hour = a.getHours();
             var min = a.getMinutes();
             var sec = a.getSeconds();
             if (hour >= 12) {
-              hour = hour-12;
+                hour = hour - 12;
             }
             var time = twoDigits(hour) + ':' + twoDigits(min) + ':' + twoDigits(sec);
             return time;
         }
+
         function addAlertMessage(timestamp, msg) {
             $("#jqxListBox").jqxListBox('addItem', msg + " time=" + formatTime(timestamp) + "\n");
         }
         $(document).ready(function() {
             initialize();
         });
+
         function initialize() {
-            var sock = new ReconnectingWebSocket(wsURL);
-        }
-        // reference: https://github.com/joewalnes/reconnecting-websocket/
-        function ReconnectingWebSocket(url, protocols) {
-            protocols = protocols || [];
-            // These can be altered by calling code.
-            this.debug = false;
-            this.reconnectInterval = 1000;
-            this.timeoutInterval = 2000;
-            var self = this;
-            var ws;
-            var forcedClose = false;
-            var timedOut = false;
-            this.url = url;
-            this.protocols = protocols;
-            this.readyState = WebSocket.CONNECTING;
-            this.URL = url; // Public API
-            this.onopen = function(event) {};
-            this.onclose = function(event) {};
-            this.onconnecting = function(event) {};
-            this.onmessage = function(event) {
-              receiveData(event.data);
-            };
-            this.onerror = function(event) {};
-          function connect(reconnectAttempt) {
-              ws = new WebSocket(url, protocols);
-              self.onconnecting();
-              if (self.debug || ReconnectingWebSocket.debugAll) {
-                  console.debug('ReconnectingWebSocket', 'attempt-connect', url);
-              }
-              var localWs = ws;
-              var timeout = setTimeout(function() {
-                  if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'connection-timeout', url);
-                  }
-                  timedOut = true;
-                  localWs.close();
-                  timedOut = false;
-              }, self.timeoutInterval);
-              ws.onopen = function(event) {
-                  clearTimeout(timeout);
-                  if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'onopen', url);
-                  }
-                  self.readyState = WebSocket.OPEN;
-                  reconnectAttempt = false;
-                  self.onopen(event);
-              };
-              ws.onclose = function(event) {
-                clearTimeout(timeout);
-                ws = null;
-                if (forcedClose) {
-                    self.readyState = WebSocket.CLOSED;
-                    self.onclose(event);
-                } else {
-                    self.readyState = WebSocket.CONNECTING;
-                    self.onconnecting();
-                    if (!reconnectAttempt && !timedOut) {
-                        if (self.debug || ReconnectingWebSocket.debugAll) {
-                            console.debug('ReconnectingWebSocket', 'onclose', url);
-                        }
-                        self.onclose(event);
-                    }
-                    setTimeout(function() {
-                        connect(true);
-                    }, self.reconnectInterval);
-                }
-              };
-              ws.onmessage = function(event) {
-                  if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'onmessage', url, event.data);
-                  }
-                  self.onmessage(event);
-              };
-              ws.onerror = function(event) {
-                  if (self.debug || ReconnectingWebSocket.debugAll) {
-                      console.debug('ReconnectingWebSocket', 'onerror', url, event);
-                  }
-                  self.onerror(event);
-              };
+                var sock = new ReconnectingWebSocket(wsURL);
             }
-            connect(url);
-            this.send = function(data) {
-                if (ws) {
-                  if (self.debug || ReconnectingWebSocket.debugAll) {
-                      console.debug('ReconnectingWebSocket', 'send', url, data);
-                  }
-                  return ws.send(data);
-                } else {
-                    throw 'INVALID_STATE_ERR : Pausing to reconnect websocket';
+            // reference: https://github.com/joewalnes/reconnecting-websocket/
+        function ReconnectingWebSocket(url, protocols) {
+                protocols = protocols || [];
+                // These can be altered by calling code.
+                this.debug = false;
+                this.reconnectInterval = 1000;
+                this.timeoutInterval = 2000;
+                var self = this;
+                var ws;
+                var forcedClose = false;
+                var timedOut = false;
+                this.url = url;
+                this.protocols = protocols;
+                this.readyState = WebSocket.CONNECTING;
+                this.URL = url; // Public API
+                this.onopen = function(event) {};
+                this.onclose = function(event) {};
+                this.onconnecting = function(event) {};
+                this.onmessage = function(event) {
+                    receiveData(event.data);
+                };
+                this.onerror = function(event) {};
+
+                function connect(reconnectAttempt) {
+                    ws = new WebSocket(url, protocols);
+                    self.onconnecting();
+                    if (self.debug || ReconnectingWebSocket.debugAll) {
+                        console.debug('ReconnectingWebSocket', 'attempt-connect', url);
+                    }
+                    var localWs = ws;
+                    var timeout = setTimeout(function() {
+                        if (self.debug || ReconnectingWebSocket.debugAll) {
+                            console.debug('ReconnectingWebSocket', 'connection-timeout', url);
+                        }
+                        timedOut = true;
+                        localWs.close();
+                        timedOut = false;
+                    }, self.timeoutInterval);
+                    ws.onopen = function(event) {
+                        clearTimeout(timeout);
+                        if (self.debug || ReconnectingWebSocket.debugAll) {
+                            console.debug('ReconnectingWebSocket', 'onopen', url);
+                        }
+                        self.readyState = WebSocket.OPEN;
+                        reconnectAttempt = false;
+                        self.onopen(event);
+                    };
+                    ws.onclose = function(event) {
+                        clearTimeout(timeout);
+                        ws = null;
+                        if (forcedClose) {
+                            self.readyState = WebSocket.CLOSED;
+                            self.onclose(event);
+                        } else {
+                            self.readyState = WebSocket.CONNECTING;
+                            self.onconnecting();
+                            if (!reconnectAttempt && !timedOut) {
+                                if (self.debug || ReconnectingWebSocket.debugAll) {
+                                    console.debug('ReconnectingWebSocket', 'onclose', url);
+                                }
+                                self.onclose(event);
+                            }
+                            setTimeout(function() {
+                                connect(true);
+                            }, self.reconnectInterval);
+                        }
+                    };
+                    ws.onmessage = function(event) {
+                        if (self.debug || ReconnectingWebSocket.debugAll) {
+                            console.debug('ReconnectingWebSocket', 'onmessage', url, event.data);
+                        }
+                        self.onmessage(event);
+                    };
+                    ws.onerror = function(event) {
+                        if (self.debug || ReconnectingWebSocket.debugAll) {
+                            console.debug('ReconnectingWebSocket', 'onerror', url, event);
+                        }
+                        self.onerror(event);
+                    };
                 }
-            };
-            this.close = function() {
-                forcedClose = true;
-                if (ws) {
-                    ws.close();
-                }
-            };
+                connect(url);
+                this.send = function(data) {
+                    if (ws) {
+                        if (self.debug || ReconnectingWebSocket.debugAll) {
+                            console.debug('ReconnectingWebSocket', 'send', url, data);
+                        }
+                        return ws.send(data);
+                    } else {
+                        throw 'INVALID_STATE_ERR : Pausing to reconnect websocket';
+                    }
+                };
+                this.close = function() {
+                    forcedClose = true;
+                    if (ws) {
+                        ws.close();
+                    }
+                };
+                /**
+                 * Additional public API method to refresh the connection if still open (close, re-open).
+                 * For example, if the app suspects bad data / missed heart beats, it can try to refresh.
+                 */
+                this.refresh = function() {
+                    if (ws) {
+                        ws.close();
+                    }
+                };
+            }
             /**
-              * Additional public API method to refresh the connection if still open (close, re-open).
-              * For example, if the app suspects bad data / missed heart beats, it can try to refresh.
-              */
-            this.refresh = function() {
-                if (ws) {
-                    ws.close();
-                }
-            };
-        }
-        /**
-          * Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
-          */
+             * Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
+             */
         ReconnectingWebSocket.debugAll = false;
+
         function receiveData(data) {
             if (data.length > 0) {
                 try {
@@ -354,9 +361,9 @@
                     } else if (jsonObject.MessageId == "Alert") {
                         addAlertMessage(jsonObject.TimeStamp, jsonObject.Content);
                     }
-                  } catch (e) {
-                      console.log(e);
-                  }
+                } catch (e) {
+                    console.log(e);
+                }
             }
         }
     </script>
