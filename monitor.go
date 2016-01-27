@@ -176,11 +176,11 @@ func HomeHandler(response http.ResponseWriter, request *http.Request) {
 }
 
 func (m *ServiceMonitor) parseResponse(resp string) {
-	if !strings.Contains(resp, "Magnificent!") {
+  if !strings.Contains(resp, "Magnificent!") {
 		m.healthStatusChan <- false
 	} else {
 		m.healthStatusChan <- true
-		m.alertChan <- "Deamon has failed"
+		m.alertChan <- "Server has failed"
 	}
 }
 
