@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Magnificent Server Health Monitoring</title>
+    <title>Server Health Monitoring</title>
     <meta charset="utf-8">
     <style>
         body {
@@ -145,11 +145,11 @@
             .text("Server Ok");
         // add legend   
         var colors = [
-          ["Magnificent Server Health Status", "#1f77b4"]
+          ["Server Health Status", "#1f77b4"]
         ];
         var legend = svg.append("g")
             .attr("class", "legend")
-            .attr("transform", "translate(-150," + (height + margin.bottom - 15) + ")");
+            .attr("transform", "translate(-70," + (height + margin.bottom - 15) + ")");
         var legendRect = legend.selectAll('rect')
             .data(colors);
         legendRect.enter()
