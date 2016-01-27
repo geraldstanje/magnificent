@@ -55,7 +55,7 @@
         var wsURL = "ws://localhost:8080/sock";
         var n = 60;
         var nLines = 1;
-        var duration = 10000;
+        var duration = 600;
         var now = new Date(Date.now() - duration);
         // 1 x nLines array of zeros
         var count = d3.range(nLines).map(function() {
@@ -107,7 +107,7 @@
             .orient("right")
         var gy = svg.append("g")
             .attr("class", "y axis")
-            .call(yAxis)
+            //.call(yAxis)
         gy.selectAll("text")
             .attr("text-anchor", "end")
             .attr("x", 4)
@@ -133,18 +133,23 @@
         // Add the text label for the Y axis
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("x",0 - (height / 2))
+            .attr("x",-60)
             .attr("y",0 - margin.left)
             .attr("dy", "1em")
-            .style("text-anchor", "middle")
-            .text("");
+            .text("Server Failure");
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x",-height-30)
+            .attr("y",0 - margin.left)
+            .attr("dy", "1em")
+            .text("Server Ok");
         // add legend   
         var colors = [
-          ["Magnificent Server Failure", "#1f77b4"]
+          ["Magnificent Server Health Status", "#1f77b4"]
         ];
         var legend = svg.append("g")
             .attr("class", "legend")
-            .attr("transform", "translate(-100," + (height + margin.bottom - 15) + ")");
+            .attr("transform", "translate(-150," + (height + margin.bottom - 15) + ")");
         var legendRect = legend.selectAll('rect')
             .data(colors);
         legendRect.enter()
