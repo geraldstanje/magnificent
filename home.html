@@ -109,9 +109,10 @@
             .scale(y)
             .tickSize(width)
             .orient("right")
+            .ticks(0);
         var gy = svg.append("g")
             .attr("class", "y axis")
-            //.call(yAxis)
+            .call(yAxis)
         gy.selectAll("text")
             .attr("text-anchor", "end")
             .attr("x", 4)
@@ -153,7 +154,7 @@
         ];
         var legend = svg.append("g")
             .attr("class", "legend")
-            .attr("transform", "translate(-80," + (height + margin.bottom - 15) + ")");
+            .attr("transform", "translate(-70," + (height + margin.bottom - 15) + ")");
         var legendRect = legend.selectAll('rect')
             .data(colors);
         legendRect.enter()
