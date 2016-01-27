@@ -208,7 +208,7 @@ func (m *ServiceMonitor) requestDeamonStatus(url string) {
 
 func (m *ServiceMonitor) monitorDeamon(url string, time_interval time.Duration) {
 	for {
-		go m.requestDeamonStatus(url)
+		m.requestDeamonStatus(url)
 		time.Sleep(time_interval * time.Second)
 	}
 }
