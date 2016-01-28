@@ -1,9 +1,8 @@
 #Overview
 
 ##Dependencies
-  1. Install Golang, see:
-https://golang.org/
-  2. Go the the top directory and set the GOPATH using:
+  1. Golang 1.5
+  2. Set the Gopath
 ```
 $ export GOPATH="$GOPATH":"$PWD"
 ```
