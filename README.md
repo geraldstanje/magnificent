@@ -2,11 +2,11 @@
 
 ##Dependencies
   1. Golang 1.5
-  2. Set the Gopath
+  2. Set the Gopath<br>
   ```
   $ export GOPATH="$GOPATH":"$PWD"
   ```
-  3. Get Websockets Lib
+  3. Get Websockets Lib<br>
   ```
   $ go get code.google.com/p/go.net/websocket
   ```
