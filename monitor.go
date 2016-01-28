@@ -135,7 +135,12 @@ func (m *ServiceMonitor) pushDataToClients() {
 			msg := Msg{"Alert", newAlert, time.Now().UnixNano() / int64(time.Millisecond)}
 			m.sendBroadcastMsg(&msg)
 			// add msg to alertQueue
-			m.alertQueue.Push(&msg)
+      if m.alertQueue.Len() < maxSizeHealthStatusQueue {
+        m.alertQueue.Push(&msg)
+      } else {
+        m.alertQueue.Pop()
+        m.alertQueue.Push(&msg)
+      }
 		}
 	}
 }
@@ -184,7 +189,7 @@ func (m *ServiceMonitor) parseResponse(resp string) {
 	}
 }
 
-func (m *ServiceMonitor) requestDeamonStatus(url string) {
+func (m *ServiceMonitor) requestDaemonStatus(url string) {
 	response, err := http.Get(url)
 	if err != nil {
 		if debug {
@@ -206,9 +211,9 @@ func (m *ServiceMonitor) requestDeamonStatus(url string) {
 	m.parseResponse(resp)
 }
 
-func (m *ServiceMonitor) monitorDeamon(url string, time_interval time.Duration) {
+func (m *ServiceMonitor) monitorDaemon(url string, time_interval time.Duration) {
 	for {
-		m.requestDeamonStatus(url)
+		m.requestDaemonStatus(url)
 		time.Sleep(time_interval * time.Second)
 	}
 }
@@ -229,7 +234,7 @@ func main() {
 
 	go m.startHTTPServer()
 	go m.pushDataToClients()
-	go m.monitorDeamon("http://localhost:12345/", 1)
+	go m.monitorDaemon("http://localhost:12345/", 1)
 
 	err := <-m.errChan
 	if err != nil {
