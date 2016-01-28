@@ -55,6 +55,7 @@
     <link href="http://jqwidgets.com/public/jqwidgets/styles/jqx.base.css" rel="stylesheet" type="text/css" />
     <link href="http://jqwidgets.com/public/jqwidgets/styles/jqx.energyblue.css" rel="stylesheet" type="text/css" />
     <script>
+        var maxListBoxSize = 600;
         var wsURL = "ws://localhost:8080/sock";
         var n = 60;
         var nLines = 1;
@@ -180,7 +181,7 @@
             });
 
         function plot(timestamp, value) {
-            console.log("value: ", value)
+            //console.log("value: ", value)
             // update the domains
             now = new Date(timestamp);
             x.domain([now - (n - 2) * duration, now - duration]);
@@ -235,6 +236,12 @@
         }
 
         function addAlertMessage(timestamp, msg) {
+            var items = $("#jqxListBox").jqxListBox('getItems');
+
+            if (items != null && items.length == maxListBoxSize) {
+                $("#jqxListBox").jqxListBox('removeAt', 0);
+            }
+
             $("#jqxListBox").jqxListBox('addItem', msg + " time=" + formatTime(timestamp) + "\n");
         }
         $(document).ready(function() {
