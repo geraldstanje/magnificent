@@ -181,7 +181,7 @@
 
         function plot(timestamp, value) {
             console.log("value: ", value)
-                // update the domains
+            // update the domains
             now = new Date(timestamp);
             x.domain([now - (n - 2) * duration, now - duration]);
             // push the new data point at the end
@@ -196,14 +196,14 @@
             // redraw the line
             svg.selectAll(".line")
                 .attr("d", line)
-                // slide the line left
+            // slide the line left
             paths.attr("transform", null)
                 .transition()
                 .duration(duration)
                 .ease("linear")
                 //.attr("transform", "translate(" + x(now - (n - 1) * duration) + ")")
                 //.each("end", tick);
-                // pop the old data point off the front
+            // pop the old data point off the front
             for (index = 0; index < nLines; index++) {
                 data[index].shift();
             }
