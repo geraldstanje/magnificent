@@ -12,6 +12,12 @@ $ export GOPATH="$GOPATH":"$PWD"
 $ go get code.google.com/p/go.net/websocket
 ```
 
+##Start the Daemon
+```
+$ cd daemon
+$ python server.py
+```
+
 ##Build and Run the Monitor App
 ```
 $ go run monitor.go
