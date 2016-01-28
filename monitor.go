@@ -135,12 +135,12 @@ func (m *ServiceMonitor) pushDataToClients() {
 			msg := Msg{"Alert", newAlert, time.Now().UnixNano() / int64(time.Millisecond)}
 			m.sendBroadcastMsg(&msg)
 			// add msg to alertQueue
-      if m.alertQueue.Len() < maxSizeHealthStatusQueue {
-        m.alertQueue.Push(&msg)
-      } else {
-        m.alertQueue.Pop()
-        m.alertQueue.Push(&msg)
-      }
+			if m.alertQueue.Len() < maxSizeHealthStatusQueue {
+				m.alertQueue.Push(&msg)
+			} else {
+				m.alertQueue.Pop()
+				m.alertQueue.Push(&msg)
+			}
 		}
 	}
 }
@@ -181,7 +181,7 @@ func HomeHandler(response http.ResponseWriter, request *http.Request) {
 }
 
 func (m *ServiceMonitor) parseResponse(resp string) {
-  if !strings.Contains(resp, "Magnificent!") {
+	if !strings.Contains(resp, "Magnificent!") {
 		m.healthStatusChan <- false
 	} else {
 		m.healthStatusChan <- true
