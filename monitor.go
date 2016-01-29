@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"queue"
 	"runtime"
 	"strings"
 	"time"
@@ -29,14 +28,16 @@ type Client struct {
 }
 
 type ServiceMonitor struct {
-	errChan           chan error // unbuffered channel
-	errChanWebsock    chan error // unbuffered channel
-	activeClients     map[string]Client
-	healthStatusChan  chan bool
-	alertChan         chan string
-	newClientChan     chan Client
-	alertQueue        *queue.Queue
-	healthStatusQueue *queue.Queue
+	errChan          chan error // unbuffered channel
+	errChanWebsock   chan error // unbuffered channel
+	activeClients    map[string]Client
+	healthStatusChan chan bool
+	alertChan        chan string
+	newClientChan    chan Client
+	//alertQueue        *queue.Queue
+	//healthStatusQueue *queue.Queue
+	alertQueue        []Msg
+	healthStatusQueue []Msg
 }
 
 func NewServiceMonitor() *ServiceMonitor {
@@ -46,8 +47,10 @@ func NewServiceMonitor() *ServiceMonitor {
 	m.healthStatusChan = make(chan bool, 10)
 	m.alertChan = make(chan string, 10)
 	m.newClientChan = make(chan Client, 10)
-	m.alertQueue = queue.NewQueue()
-	m.healthStatusQueue = queue.NewQueue()
+	//m.alertQueue = queue.NewQueue()
+	//m.healthStatusQueue = queue.NewQueue()
+	m.alertQueue = make([]Msg, 0)
+	m.healthStatusQueue = make([]Msg, 0)
 	return &m
 }
 
@@ -79,24 +82,32 @@ func (m *ServiceMonitor) sendBroadcastMsg(msg *Msg) {
 }
 
 func (m *ServiceMonitor) sendQueueData(ip string) {
-	for i := 0; i < m.healthStatusQueue.Len(); i++ {
-		e, found := m.healthStatusQueue.Get(i)
-
-		if found {
-			if msg, ok := e.(*Msg); ok {
-				m.sendClientMsg(msg, ip)
-			}
-		}
+	for _, msg := range m.healthStatusQueue {
+		m.sendClientMsg(&msg, ip)
 	}
 
-	for i := 0; i < m.alertQueue.Len(); i++ {
-		e, found := m.alertQueue.Get(i)
+	for _, msg := range m.alertQueue {
+		m.sendClientMsg(&msg, ip)
+	}
+}
 
-		if found {
-			if msg, ok := e.(*Msg); ok {
-				m.sendClientMsg(msg, ip)
-			}
-		}
+func (m *ServiceMonitor) appendhealthStatus(msg Msg) {
+	// add msg to HealthStatusQueue
+	if len(m.healthStatusQueue) < maxSizeHealthStatusQueue {
+		m.healthStatusQueue = append(m.healthStatusQueue, msg)
+	} else {
+		m.healthStatusQueue = m.healthStatusQueue[1:]
+		m.healthStatusQueue = append(m.healthStatusQueue, msg)
+	}
+}
+
+func (m *ServiceMonitor) appendAlert(msg Msg) {
+	// add msg to alertQueue
+	if len(m.alertQueue) < maxSizeHealthStatusQueue {
+		m.alertQueue = append(m.alertQueue, msg)
+	} else {
+		m.alertQueue = m.alertQueue[1:]
+		m.alertQueue = append(m.alertQueue, msg)
 	}
 }
 
@@ -116,25 +127,13 @@ func (m *ServiceMonitor) pushDataToClients() {
 		case newHealthStatus := <-m.healthStatusChan:
 			msg := Msg{"Plot", BoolToString(newHealthStatus), time.Now().UnixNano() / int64(time.Millisecond)}
 			m.sendBroadcastMsg(&msg)
-			// add msg to HealthStatusQueue
-			if m.healthStatusQueue.Len() < maxSizeHealthStatusQueue {
-				m.healthStatusQueue.Push(&msg)
-			} else {
-				m.healthStatusQueue.Pop()
-				m.healthStatusQueue.Push(&msg)
-			}
+			m.appendhealthStatus(msg)
 
 		// broadcast an alert message to all clients
 		case newAlert := <-m.alertChan:
 			msg := Msg{"Alert", newAlert, time.Now().UnixNano() / int64(time.Millisecond)}
 			m.sendBroadcastMsg(&msg)
-			// add msg to alertQueue
-			if m.alertQueue.Len() < maxSizeHealthStatusQueue {
-				m.alertQueue.Push(&msg)
-			} else {
-				m.alertQueue.Pop()
-				m.alertQueue.Push(&msg)
-			}
+			m.appendAlert(msg)
 		}
 	}
 }
