@@ -1,7 +1,8 @@
 package main
 
 import (
-	"code.google.com/p/go.net/websocket"
+	//"code.google.com/p/go.net/websocket"
+  "github.com/gorilla/websocket"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -59,10 +60,7 @@ func BoolToString(value bool) string {
 }
 
 func (m *ServiceMonitor) sendClientMsg(msg *Msg, ip string) {
-	var err error
-	var Message = websocket.JSON
-
-	if err = Message.Send(m.activeClients[ip].websocket, msg); err != nil {
+  if err := m.activeClients[ip].websocket.WriteJSON(msg); err != nil {
 		// we could not send the message to a peer
 		log.Println("Could not send message to:", ip, err.Error())
 		log.Println("Client disconnected:", ip)
@@ -71,11 +69,8 @@ func (m *ServiceMonitor) sendClientMsg(msg *Msg, ip string) {
 }
 
 func (m *ServiceMonitor) sendBroadcastMsg(msg *Msg) {
-	var err error
-	var Message = websocket.JSON
-
 	for ip, _ := range m.activeClients {
-		if err = Message.Send(m.activeClients[ip].websocket, msg); err != nil {
+    if err := m.activeClients[ip].websocket.WriteJSON(msg); err != nil {
 			// we could not send the message to a peer
 			log.Println("Could not send message to:", ip, err.Error())
 			log.Println("Client disconnected:", ip)
@@ -145,24 +140,24 @@ func (m *ServiceMonitor) pushDataToClients() {
 	}
 }
 
-// reference: https://github.com/Niessy/websocket-golang-chat
-// WebSocket server to handle clients
-func (m *ServiceMonitor) WebSocketServer(ws *websocket.Conn) {
-	var err error
+// WebSocket handler to handle clients
+func (m *ServiceMonitor) wsHandler(ws http.ResponseWriter, r *http.Request) {
+  conn, err := websocket.Upgrade(ws, r, nil, 1024, 1024)
+  if _, ok := err.(websocket.HandshakeError); ok {
+    http.Error(ws, "Not a websocket handshake", 400)
+    return
+  } else if err != nil {
+    log.Println(err)
+    return
+  }
+  defer conn.Close()
 
-	// cleanup on server side
-	defer func() {
-		if err = ws.Close(); err != nil {
-			log.Println("Websocket could not be closed", err.Error())
-		}
-	}()
-
-	client := ws.Request().RemoteAddr
+	client := conn.RemoteAddr().String()
 	if debug {
 		log.Println("New client connected:", client)
 	}
 
-	m.newClientChan <- Client{ws, client}
+	m.newClientChan <- Client{conn, client}
 
 	// wait for errChan, so the websocket stays open otherwise it'll close
 	err = <-m.errChanWebsock
@@ -220,7 +215,7 @@ func (m *ServiceMonitor) monitorDaemon(url string, time_interval time.Duration) 
 
 func (m *ServiceMonitor) startHTTPServer() {
 	http.Handle("/", http.HandlerFunc(HomeHandler))
-	http.Handle("/sock", websocket.Handler(m.WebSocketServer))
+  http.HandleFunc("/sock", m.wsHandler)
 
 	err := http.ListenAndServe(":8080", nil)
 	m.errChanWebsock <- err

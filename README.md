@@ -8,7 +8,7 @@
   ```
   3. Get Websockets Lib<br>
   ```
-  $ go get code.google.com/p/go.net/websocket
+  $ go get github.com/gorilla/websocket
   ```
 
 ##Start the Daemon
