@@ -67,8 +67,8 @@ func (m *ServiceMonitor) sendClientMsg(msg *Msg, ip string) {
 }
 
 func (m *ServiceMonitor) sendBroadcastMsg(msg *Msg) {
-	for ip, _ := range m.activeClients {
-		if err := m.activeClients[ip].websocket.WriteJSON(msg); err != nil {
+	for ip, con := range m.activeClients {
+		if err := con.websocket.WriteJSON(msg); err != nil {
 			// we could not send the message to a peer
 			log.Println("Could not send message to:", ip, err.Error())
 			log.Println("Client disconnected:", ip)
