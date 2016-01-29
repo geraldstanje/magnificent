@@ -140,10 +140,10 @@ func (m *ServiceMonitor) pushDataToClients() {
 }
 
 // WebSocket handler to handle clients
-func (m *ServiceMonitor) wsHandler(ws http.ResponseWriter, r *http.Request) {
-	conn, err := websocket.Upgrade(ws, r, nil, 1024, 1024)
+func (m *ServiceMonitor) wsHandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 	if _, ok := err.(websocket.HandshakeError); ok {
-		http.Error(ws, "Not a websocket handshake", 400)
+		http.Error(w, "Not a websocket handshake", 400)
 		return
 	} else if err != nil {
 		log.Println(err)
