@@ -1,9 +1,8 @@
 package main
 
 import (
-	//"code.google.com/p/go.net/websocket"
-  "github.com/gorilla/websocket"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -60,7 +59,7 @@ func BoolToString(value bool) string {
 }
 
 func (m *ServiceMonitor) sendClientMsg(msg *Msg, ip string) {
-  if err := m.activeClients[ip].websocket.WriteJSON(msg); err != nil {
+	if err := m.activeClients[ip].websocket.WriteJSON(msg); err != nil {
 		// we could not send the message to a peer
 		log.Println("Could not send message to:", ip, err.Error())
 		log.Println("Client disconnected:", ip)
@@ -70,7 +69,7 @@ func (m *ServiceMonitor) sendClientMsg(msg *Msg, ip string) {
 
 func (m *ServiceMonitor) sendBroadcastMsg(msg *Msg) {
 	for ip, _ := range m.activeClients {
-    if err := m.activeClients[ip].websocket.WriteJSON(msg); err != nil {
+		if err := m.activeClients[ip].websocket.WriteJSON(msg); err != nil {
 			// we could not send the message to a peer
 			log.Println("Could not send message to:", ip, err.Error())
 			log.Println("Client disconnected:", ip)
@@ -142,15 +141,15 @@ func (m *ServiceMonitor) pushDataToClients() {
 
 // WebSocket handler to handle clients
 func (m *ServiceMonitor) wsHandler(ws http.ResponseWriter, r *http.Request) {
-  conn, err := websocket.Upgrade(ws, r, nil, 1024, 1024)
-  if _, ok := err.(websocket.HandshakeError); ok {
-    http.Error(ws, "Not a websocket handshake", 400)
-    return
-  } else if err != nil {
-    log.Println(err)
-    return
-  }
-  defer conn.Close()
+	conn, err := websocket.Upgrade(ws, r, nil, 1024, 1024)
+	if _, ok := err.(websocket.HandshakeError); ok {
+		http.Error(ws, "Not a websocket handshake", 400)
+		return
+	} else if err != nil {
+		log.Println(err)
+		return
+	}
+	defer conn.Close()
 
 	client := conn.RemoteAddr().String()
 	if debug {
@@ -215,7 +214,7 @@ func (m *ServiceMonitor) monitorDaemon(url string, time_interval time.Duration) 
 
 func (m *ServiceMonitor) startHTTPServer() {
 	http.Handle("/", http.HandlerFunc(HomeHandler))
-  http.HandleFunc("/sock", m.wsHandler)
+	http.HandleFunc("/sock", m.wsHandler)
 
 	err := http.ListenAndServe(":8080", nil)
 	m.errChanWebsock <- err
