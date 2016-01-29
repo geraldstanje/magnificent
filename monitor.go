@@ -50,7 +50,7 @@ func NewServiceMonitor() *ServiceMonitor {
 	return &m
 }
 
-func BoolToString(value bool) string {
+func boolToString(value bool) string {
 	if value {
 		return "1"
 	}
@@ -121,7 +121,7 @@ func (m *ServiceMonitor) pushDataToClients() {
 		// newHealthStatus == 1 ... deamon failure
 		// newHealthStatus == 0 ... deamon ok
 		case newHealthStatus := <-m.healthStatusChan:
-			msg := Msg{"Plot", BoolToString(newHealthStatus), time.Now().UnixNano() / int64(time.Millisecond)}
+			msg := Msg{"Plot", boolToString(newHealthStatus), time.Now().UnixNano() / int64(time.Millisecond)}
 			m.sendBroadcastMsg(&msg)
 			m.appendhealthStatus(msg)
 
@@ -158,7 +158,7 @@ func (m *ServiceMonitor) wsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // handler for the main page
-func HomeHandler(response http.ResponseWriter, request *http.Request) {
+func homeHandler(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-type", "text/html")
 	webpage, err := ioutil.ReadFile("home.html")
 
@@ -208,7 +208,7 @@ func (m *ServiceMonitor) monitorDaemon(url string, time_interval time.Duration) 
 }
 
 func (m *ServiceMonitor) startHTTPServer() {
-	http.Handle("/", http.HandlerFunc(HomeHandler))
+	http.Handle("/", http.HandlerFunc(homeHandler))
 	http.HandleFunc("/sock", m.wsHandler)
 
 	err := http.ListenAndServe(":8080", nil)
