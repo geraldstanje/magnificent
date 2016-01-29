@@ -2,11 +2,7 @@
 
 ##Dependencies
   1. Golang 1.5
-  2. Set the Gopath<br>
-  ```
-  $ export GOPATH="$GOPATH":"$PWD"
-  ```
-  3. Get Websockets Lib<br>
+  2. Get Websockets Lib<br>
   ```
   $ go get github.com/gorilla/websocket
   ```
