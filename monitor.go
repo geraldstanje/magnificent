@@ -28,12 +28,12 @@ type Client struct {
 }
 
 type ServiceMonitor struct {
-	errChan          chan error // unbuffered channel
-	errChanWebsock   chan error // unbuffered channel
-	activeClients    map[string]Client
-	healthStatusChan chan bool
-	alertChan        chan string
-	newClientChan    chan Client
+	errChan           chan error // unbuffered channel
+	errChanWebsock    chan error // unbuffered channel
+	activeClients     map[string]Client
+	healthStatusChan  chan bool
+	alertChan         chan string
+	newClientChan     chan Client
 	alertQueue        []Msg
 	healthStatusQueue []Msg
 }
