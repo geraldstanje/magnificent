@@ -34,8 +34,6 @@ type ServiceMonitor struct {
 	healthStatusChan chan bool
 	alertChan        chan string
 	newClientChan    chan Client
-	//alertQueue        *queue.Queue
-	//healthStatusQueue *queue.Queue
 	alertQueue        []Msg
 	healthStatusQueue []Msg
 }
@@ -47,8 +45,6 @@ func NewServiceMonitor() *ServiceMonitor {
 	m.healthStatusChan = make(chan bool, 10)
 	m.alertChan = make(chan string, 10)
 	m.newClientChan = make(chan Client, 10)
-	//m.alertQueue = queue.NewQueue()
-	//m.healthStatusQueue = queue.NewQueue()
 	m.alertQueue = make([]Msg, 0)
 	m.healthStatusQueue = make([]Msg, 0)
 	return &m
